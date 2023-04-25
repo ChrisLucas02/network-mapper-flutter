@@ -67,17 +67,14 @@ class ScriptSelectView extends StatelessWidget {
                       ),
                       ElevatedButton(
                         onPressed: () async {
-                          final a = await Process.run(script.cmd, [
-                            script.args.entries.first.key,
-                            script.args.entries.first.value
-                          ]);
-                          print("start");
-                          print(a.stdout);
-                          print("done");
-                          final outss = a.stdout;
-                          final splitter = LineSplitter();
-                          final ifs = splitter.convert(outss);
-                          print(ifs);
+                          final result =
+                              """# Nmap 7.93 scan initiated Mon Apr 24 21:29:36 2023 as: nmap -oG - 172.20.10.0/24
+Host: 172.20.10.1 ()	Status: Up
+Host: 172.20.10.1 ()	Ports: 21/open/tcp//ftp///, 53/open/tcp//domain///, 49152/open/tcp//unknown///, 49154/open/tcp//unknown///, 62078/open/tcp//iphone-sync///	Ignored State: closed (995)
+Host: 172.20.10.2 ()	Status: Up
+Host: 172.20.10.2 ()	Ports: 5000/open/tcp//upnp///, 7000/open/tcp//afs3-fileserver///	Ignored State: closed (998)
+# Nmap done at Mon Apr 24 21:30:01 2023 -- 256 IP addresses (2 hosts up) scanned in 24.85 seconds""";
+                          parseNmap1(result);
                         },
                         child: const Padding(
                           padding: EdgeInsets.symmetric(vertical: 8.0),
@@ -93,5 +90,32 @@ class ScriptSelectView extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  void parseNmap1(String result) {
+    print("start");
+    const splitter = LineSplitter();
+
+    final lines = splitter.convert(result);
+    final firstTest = RegExp(
+        r'(?=Host).*\b((([0-2]\d[0-5])|(\d{2})|(\d))\.){3}(([0-2]\d[0-5])|(\d{2})|(\d))\b.*(Up)');
+    final secondTest = RegExp(
+        r'\b((([0-2]\d[0-5])|(\d{2})|(\d))\.){3}(([0-2]\d[0-5])|(\d{2})|(\d))');
+    var checkNextLine = false;
+    for (var line in lines) {
+      if (line.startsWith('#')) continue;
+      if (checkNextLine) {
+        final matches = secondTest.firstMatch(line);
+        if (matches == null) {
+          continue;
+        }
+        print(matches[0]);
+        checkNextLine = false;
+      }
+      if (firstTest.hasMatch(line)) {
+        checkNextLine = true;
+      }
+    }
+    print("done");
   }
 }
