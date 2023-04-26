@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:recon_tool/model/host.dart';
 import 'package:recon_tool/model/script.dart';
 import 'package:recon_tool/script/home/bloc/script_home_bloc.dart';
 import 'package:recon_tool/script/home/bloc/script_home_event.dart';
@@ -80,7 +81,17 @@ Host: 172.20.10.2 ()	Ports: 5000/open/tcp//upnp///, 7000/open/tcp//afs3-fileserv
                           padding: EdgeInsets.symmetric(vertical: 8.0),
                           child: Text("Start Scan"),
                         ),
-                      )
+                      ),
+                      ElevatedButton(
+                        onPressed: () async {
+                          //ScannedHost a = script.result[0];
+                          //  print(a.port);
+                        },
+                        child: const Padding(
+                          padding: EdgeInsets.symmetric(vertical: 8.0),
+                          child: Text("Start Scan"),
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -101,6 +112,7 @@ Host: 172.20.10.2 ()	Ports: 5000/open/tcp//upnp///, 7000/open/tcp//afs3-fileserv
         r'(?=Host).*\b((([0-2]\d[0-5])|(\d{2})|(\d))\.){3}(([0-2]\d[0-5])|(\d{2})|(\d))\b.*(Up)');
     final secondTest = RegExp(
         r'\b((([0-2]\d[0-5])|(\d{2})|(\d))\.){3}(([0-2]\d[0-5])|(\d{2})|(\d))');
+    final thirdTest = RegExp(r'[0-9]+\/{1}open\/(tcp|udp)\/{2}[a-z\-0-9]+');
     var checkNextLine = false;
     for (var line in lines) {
       if (line.startsWith('#')) continue;
@@ -108,6 +120,19 @@ Host: 172.20.10.2 ()	Ports: 5000/open/tcp//upnp///, 7000/open/tcp//afs3-fileserv
         final matches = secondTest.firstMatch(line);
         if (matches == null) {
           continue;
+        }
+        final matches2 = thirdTest.allMatches(line);
+        for (var match in matches2) {
+          final values = match[0]!.split("/");
+          print(match[0]);
+          // convert to object
+          final result = ScannedHost(
+            port: int.parse(values[0]),
+            hint: values[3],
+            portType: values[2] == "tcp" ? PortType.tcp : PortType.udp,
+            isOpen: values[1] == "open",
+          );
+          script.result.add(result);
         }
         print(matches[0]);
         checkNextLine = false;

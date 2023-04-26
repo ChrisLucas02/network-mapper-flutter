@@ -9,6 +9,7 @@ class ReconScript {
   final ReconScriptType type;
   final String cmd;
   Map<String, String> args = {};
+  List<dynamic> result = [];
 
   ReconScript({
     required this.id,
